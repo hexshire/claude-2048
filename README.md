@@ -45,8 +45,8 @@ and shut. State (pending PID, window title) is tracked in `/tmp/claude-2048/`.
 ## Install
 
 ```sh
-git clone <this-repo> ClaudeAdventure
-cd ClaudeAdventure
+git clone https://github.com/hexshire/claude-2048.git
+cd claude-2048
 ./install.sh
 ```
 
