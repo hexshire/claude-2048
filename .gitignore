@@ -1,0 +1,5 @@
+.2048_highscore
+__pycache__/
+*.pyc
+.DS_Store
+.claude/settings.local.json
