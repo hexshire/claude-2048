@@ -17,7 +17,8 @@ mkdir -p "$GAMES_DIR"
 cp "$REPO_DIR/2048.py" "$GAMES_DIR/2048.py"
 cp "$REPO_DIR/launch.sh" "$GAMES_DIR/launch.sh"
 cp "$REPO_DIR/stop.sh" "$GAMES_DIR/stop.sh"
-chmod +x "$GAMES_DIR/2048.py" "$GAMES_DIR/launch.sh" "$GAMES_DIR/stop.sh"
+cp "$REPO_DIR/attention.sh" "$GAMES_DIR/attention.sh"
+chmod +x "$GAMES_DIR/2048.py" "$GAMES_DIR/launch.sh" "$GAMES_DIR/stop.sh" "$GAMES_DIR/attention.sh"
 
 echo "==> Registering hooks in $SETTINGS_FILE"
 /usr/bin/env python3 - "$SETTINGS_FILE" "$GAMES_DIR" <<'PYEOF'
@@ -49,6 +50,7 @@ def ensure_hook(event: str, command: str) -> bool:
 
 changed = False
 changed |= ensure_hook("UserPromptSubmit", str(games_dir / "launch.sh"))
+changed |= ensure_hook("Notification", str(games_dir / "attention.sh"))
 changed |= ensure_hook("Stop", str(games_dir / "stop.sh"))
 
 if changed:

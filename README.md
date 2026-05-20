@@ -22,15 +22,18 @@ itself and brings focus back to your main terminal.
 
 ## How it works
 
-Two Claude Code hooks are wired into `~/.claude/settings.json`:
+Three Claude Code hooks are wired into `~/.claude/settings.json`:
 
-| Event              | Script       | What it does                                                              |
-| ------------------ | ------------ | ------------------------------------------------------------------------- |
-| `UserPromptSubmit` | `launch.sh`  | Schedules a new Terminal window with 2048 to open after a 3-second delay. |
-| `Stop`             | `stop.sh`    | Cancels the pending launch (if Claude was fast) and closes the window.    |
+| Event              | Script          | What it does                                                                                                              |
+| ------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `UserPromptSubmit` | `launch.sh`     | Schedules a new Terminal window with 2048 to open after a 3-second delay.                                                 |
+| `Notification`     | `attention.sh`  | Claude is waiting on you (permission prompt, question, idle). Flips the game into a full-screen "needs input" banner and pings a macOS notification. |
+| `Stop`             | `stop.sh`       | Cancels the pending launch (if Claude was fast) and closes the game window.                                               |
 
 The 3-second delay means short responses don't cause a window to flicker open
-and shut. State (pending PID, window title) is tracked in `/tmp/claude-2048/`.
+and shut. While the banner is up, any keystroke closes the game window so
+focus returns to your main terminal. State (pending PID, window title,
+attention flag) is tracked in `/tmp/claude-2048/`.
 
 ## Requirements
 
@@ -99,6 +102,7 @@ This removes the hook entries from `~/.claude/settings.json`, deletes
 ClaudeAdventure/
 ├── 2048.py        # the game (curses, single file, stdlib only)
 ├── launch.sh      # UserPromptSubmit hook — opens the game window
+├── attention.sh   # Notification hook — flips the game into "needs input" mode
 ├── stop.sh        # Stop hook — closes the game window
 ├── install.sh     # copies files + patches settings.json
 ├── uninstall.sh   # reverses install

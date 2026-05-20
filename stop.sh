@@ -5,6 +5,9 @@
 
 STATE_DIR="/tmp/claude-2048"
 
+# Clear the attention flag — Claude is done, no longer waiting on the user.
+rm -f "$STATE_DIR/needs-attention"
+
 # Cancel pending launch (if the window hasn't opened yet due to the delay).
 if [ -f "$STATE_DIR/pending-pid" ]; then
     PID=$(cat "$STATE_DIR/pending-pid")

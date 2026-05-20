@@ -2,13 +2,42 @@
 """2048 — a tiny terminal game to play while Claude is thinking."""
 import curses
 import math
+import os
 import random
+import subprocess
 from pathlib import Path
 
 SIZE = 4
 CELL_W = 7
 CELL_H = 3
 HIGHSCORE_FILE = Path.home() / ".claude" / "games" / ".2048_highscore"
+ATTENTION_FILE = Path("/tmp/claude-2048/needs-attention")
+POLL_MS = 200
+
+
+def close_own_window():
+    """Close the Terminal window that hosts this game, if launched via the hook."""
+    window_id = os.environ.get("CLAUDE_GAME_WINDOW", "").strip()
+    if not window_id:
+        return
+    script = (
+        'tell application "Terminal"\n'
+        '    set winList to every window\n'
+        '    repeat with w in winList\n'
+        '        try\n'
+        f'            if custom title of w is "{window_id}" then\n'
+        '                close w saving no\n'
+        '            end if\n'
+        '        end try\n'
+        '    end repeat\n'
+        'end tell'
+    )
+    subprocess.run(
+        ["/usr/bin/osascript", "-e", script],
+        stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        check=False,
+    )
 
 
 def load_highscore():
@@ -184,6 +213,29 @@ def draw(stdscr, grid, score, highscore, message):
     stdscr.refresh()
 
 
+def draw_attention(stdscr):
+    """Take over the screen with a 'Claude needs you' banner."""
+    stdscr.erase()
+    h, w = stdscr.getmaxyx()
+    lines = [
+        "",
+        "⚠  CLAUDE NEEDS YOUR INPUT  ⚠",
+        "",
+        "Switch back to your terminal to answer.",
+        "",
+        "Press any key to close this window.",
+    ]
+    y0 = max(0, (h - len(lines)) // 2)
+    for i, line in enumerate(lines):
+        x = max(0, (w - len(line)) // 2)
+        try:
+            attr = curses.A_BOLD | curses.A_BLINK if i == 1 else curses.A_NORMAL
+            stdscr.addstr(y0 + i, x, line, attr)
+        except curses.error:
+            pass
+    stdscr.refresh()
+
+
 def new_game():
     grid = [[0] * SIZE for _ in range(SIZE)]
     spawn(grid)
@@ -210,6 +262,7 @@ KEYMAP = {
 def run(stdscr):
     curses.curs_set(0)
     stdscr.keypad(True)
+    stdscr.timeout(POLL_MS)
     init_colors()
 
     grid = new_game()
@@ -219,12 +272,22 @@ def run(stdscr):
     won_shown = False
 
     while True:
+        # If Claude is waiting for input, take over the screen until any key.
+        if ATTENTION_FILE.exists():
+            draw_attention(stdscr)
+            ch = stdscr.getch()
+            if ch != -1:
+                return
+            continue
+
         if score > highscore:
             highscore = score
             save_highscore(highscore)
         draw(stdscr, grid, score, highscore, message)
         ch = stdscr.getch()
 
+        if ch == -1:
+            continue
         if ch in (ord("q"), 27):
             break
         if ch == ord("r"):
@@ -252,3 +315,5 @@ if __name__ == "__main__":
         curses.wrapper(run)
     except KeyboardInterrupt:
         pass
+    finally:
+        close_own_window()

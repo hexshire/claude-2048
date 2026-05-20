@@ -25,6 +25,7 @@ settings = json.loads(settings_path.read_text())
 commands_to_drop = {
     str(games_dir / "launch.sh"),
     str(games_dir / "stop.sh"),
+    str(games_dir / "attention.sh"),
 }
 
 hooks = settings.get("hooks", {})
